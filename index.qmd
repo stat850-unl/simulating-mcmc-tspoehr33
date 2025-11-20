@@ -1,6 +1,6 @@
 ---
 title: "Monte Carlo Simulation"
-author: "Your name"
+author: "Thomas Spoehr"
 format: html
 ---
 
@@ -37,11 +37,62 @@ The distance between the origin and the end of the chain $(x,y,z)$ can be calcul
 Write a function that takes $n$ and returns the distance between the start and end points of a chain. 
 Use vector-based operations to increase the efficiency of your function.
 
+```{r}
+
+set.seed(12345)
+
+#Distance from beginning link to next link
+
+dist.func <- function(n){
+  theta <- runif(n, min = 0, max = 2*pi)
+  phi <- runif(n, min = 0, max = pi)
+  x <- cos(theta) * sin(phi)
+  y <- sin(theta) * sin(phi)
+  z <- cos(phi)
+  x.sum <- sum(x)
+  y.sum <- sum(y)
+  z.sum <- sum(z)
+  total_length <- sqrt(x.sum^2 + y.sum^2 + z.sum^2)
+  return(total_length)
+}
+
+
+dist.func(10)
+
+
+```
+
+
 
 ## Distribution of Unconstrained Links
 
 Simulate 10000 chains and save the distribution of the end-to-end distance.
 
+```{r}
+set.seed(12345)
+
+library(ggplot2)
+
+length.vec <- c()
+
+for(i in 1:10000){
+  temp.length <- dist.func(10)
+  length.vec <- c(length.vec, temp.length)
+}
+
+df.1 <- data.frame(1:10000, length.vec)
+
+plot1 <- ggplot(df.1, aes(x = length.vec)) +
+  geom_histogram(binwidth = 0.1) +
+    labs(title = "Distribtution of Length of Polymer Chains",
+         subtitle = "Each chain of length 10",
+         x = "Length of Chain",
+         y = "Frequency") +
+        theme_minimal()
+
+plot1
+
+```
 
 
 # Constrained Polymer Chains
@@ -56,9 +107,111 @@ We can do this by checking the angle between adjacent links after choosing a ran
 Write a function that takes $n$ and returns the distance between the start and end points of a chain. 
 Can you think of a way to use vectorized functions to accomplish this task? Why or why not? 
 
+I think that given the skills we have learned in class I don't know that there is a way to accomplish this without using loops. I wrote the function below using a while loop and if statement where I'm not sure how you would check the conditions without using the checks that only the while loop can provide. I don't think that we can just do an apply here and it might be difficult to utlize a vector function to substutute in a if statement given the way I have written the program.
+
+```{r}
+
+# We know that the distance between the starting point of the original polymer and second polymer has to be greater than approximately 0.7654 through trigonometry functions
+
+#Note that c1 and c2 must be vectors of coordinates (x,y,z)
+
+# Scratch Work to get to answer
+dist.calc <- function(c1, c2){
+  dist <- sqrt((c1[1]+c2[1])^2 + (c1[2]+c2[2])^2 + (c1[3]+c2[3])^2)
+  return(dist)
+}
+
+# n = 10
+# chain_count = 0
+# total.dist = c()
+# init_coord <- c(0,0,0)
+# 
+# while(chain_count < n){
+#   theta <- runif(1, min = 0, max = 2*pi)
+#   phi <- runif(1, min = 0, max = pi)
+#   x <- cos(theta) * sin(phi)
+#   y <- sin(theta) * sin(phi)
+#   z <- cos(phi)
+#   considered_vec <- c(x, y, z)
+#   dist <- dist.calc(init_coord, considered_vec)
+#   if(dist >= 0.7654){
+#     total.dist <- c(total.dist, dist)
+#     init_coord <- considered_vec
+#     chain_count = chain_count + 1 
+#    }
+# }
+
+
+#### Final function
+
+constrained.polymer.chain.distance <- function(n){
+  chain_count = 0
+  total.dist = c()
+  init_coord <- c(0,0,0)
+  while(chain_count < n){
+  theta <- runif(1, min = 0, max = 2*pi)
+  phi <- runif(1, min = 0, max = pi)
+  x <- cos(theta) * sin(phi)
+  y <- sin(theta) * sin(phi)
+  z <- cos(phi)
+  considered_vec <- c(x, y, z)
+  dist <- dist.calc(init_coord, considered_vec)
+  if(dist >= 0.7654){
+    total.dist <- c(total.dist, dist)
+    init_coord <- considered_vec
+    chain_count = chain_count + 1 
+      }
+    }
+  total_distance <- sum(total.dist)
+  return(total_distance)
+}
+
+
+constrained.polymer.chain.distance(10)
+
+```
+
+
 ## Distribution of Constrained Links
 
 Simulate 10000 chains and save the distribution of the end-to-end distance.
-Plot the density of the unconstrained links and the density of constrained links on the same plot -- how much has the distribution changed?
+Plot the density of the unconstrained links and the density of constrained links on the same plot -- how much has the distribution changed? 
 
+We can see the distribution has shifted drastically to have a mean centered around 14 as opposed 2.5. The distribution of the constrained polymer chain also appears to be more symmetric than the unconstrained polymer chain which is skewed right.
+```{r}
+set.seed(12345)
+
+library(ggplot2)
+
+constrained.length.vec <- c()
+
+for(i in 1:10000){
+  temp.length.constr <- constrained.polymer.chain.distance(10)
+  constrained.length.vec <- c(constrained.length.vec, temp.length.constr)
+}
+
+df.2 <- data.frame(c(1:10000), constrained.length.vec)
+
+plot2 <- ggplot(df.2, aes(x = constrained.length.vec)) +
+  geom_histogram(binwidth = 0.1) +
+    labs(title = "Distribtution of Length of Constrained Polymer Chains",
+         subtitle = "Each chain of length 10",
+         x = "Length of Chain",
+         y = "Frequency") +
+        theme_minimal()
+
+plot2
+
+```
+
+
+Comparison of the two plots.
+
+```{r}
+plot1
+plot2
+
+
+
+```
 
